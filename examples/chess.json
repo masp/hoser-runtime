@@ -1,0 +1,332 @@
+[
+    {
+        "name": "summarize_dir",
+        "procs": [
+            {
+                "name": "find0",
+                "in": [],
+                "out": [
+                    {
+                        "name": "stdout",
+                        "type": "stream"
+                    }
+                ],
+                "type": "process",
+                "exe": "find",
+                "args": [
+                    "games",
+                    "-name",
+                    "*.pgn.bz2"
+                ]
+            },
+            {
+                "name": "xargs0",
+                "in": [
+                    {
+                        "name": "stdin",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "stdout",
+                        "type": "stream"
+                    }
+                ],
+                "type": "process",
+                "exe": "hoser",
+                "args": ["$self", "-p", "summarize_pgn_file"]
+            }
+        ],
+        "vars": [
+            {
+                "name": "stdout",
+                "in": [
+                    {
+                        "name": "i",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "o",
+                        "type": "stream"
+                    }
+                ],
+                "type": "var",
+                "default": null
+            }
+        ],
+        "links": [
+            {
+                "src": {
+                    "node": "find0",
+                    "port": "stdout"
+                },
+                "dst": {
+                    "node": "xargs0",
+                    "port": "stdin"
+                }
+            },
+            {
+                "src": {
+                    "node": "xargs0",
+                    "port": "stdout"
+                },
+                "dst": {
+                    "node": "stdout",
+                    "port": "i"
+                }
+            }
+        ]
+    },
+    {
+        "name": "summarize_pgn_file",
+        "procs": [
+            {
+                "name": "bzip20",
+                "in": [
+                    {
+                        "name": "stdin",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "stdout",
+                        "type": "stream"
+                    },
+                    {
+                        "name": "stderr",
+                        "type": "stream"
+                    }
+                ],
+                "type": "process",
+                "exe": "bzip2",
+                "args": [
+                    "-d"
+                ]
+            },
+            {
+                "name": "sed0",
+                "in": [
+                    {
+                        "name": "stdin",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "stdout",
+                        "type": "stream"
+                    }
+                ],
+                "type": "process",
+                "exe": "sed",
+                "args": [
+                    "s/^/[bzip20] /"
+                ]
+            },
+            {
+                "name": "grep0",
+                "in": [
+                    {
+                        "name": "stdin",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "stdout",
+                        "type": "stream"
+                    }
+                ],
+                "type": "process",
+                "exe": "grep",
+                "args": [
+                    "-F",
+                    "Result"
+                ]
+            },
+            {
+                "name": "mawk0",
+                "in": [
+                    {
+                        "name": "stdin",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "stdout",
+                        "type": "stream"
+                    },
+                    {
+                        "name": "stderr",
+                        "type": "stream"
+                    }
+                ],
+                "type": "process",
+                "exe": "mawk",
+                "args": [
+                    "\n/Result/ {\n    split($0, a, \"-\");\n    res = substr(a[1], length(a[1]), 1);\n    if (res == 1) white++;\n    if (res == 0) black++;\n    if (res == 2) draw++;\n}\nEND { print white+black+draw, white, black, draw }\n"
+                ]
+            },
+            {
+                "name": "sed1",
+                "in": [
+                    {
+                        "name": "stdin",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "stdout",
+                        "type": "stream"
+                    }
+                ],
+                "type": "process",
+                "exe": "sed",
+                "args": [
+                    "s/^/[mawk0] /"
+                ]
+            }
+        ],
+        "vars": [
+            {
+                "name": "pgn",
+                "in": [
+                    {
+                        "name": "i",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "o",
+                        "type": "stream"
+                    }
+                ],
+                "type": "var",
+                "default": null
+            },
+            {
+                "name": "stdout",
+                "in": [
+                    {
+                        "name": "i",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "o",
+                        "type": "stream"
+                    }
+                ],
+                "type": "var",
+                "default": null
+            },
+            {
+                "name": "stderr",
+                "in": [
+                    {
+                        "name": "i",
+                        "type": "stream"
+                    }
+                ],
+                "out": [
+                    {
+                        "name": "o",
+                        "type": "stream"
+                    }
+                ],
+                "type": "var",
+                "default": null
+            }
+        ],
+        "links": [
+            {
+                "src": {
+                    "node": "bzip20",
+                    "port": "stderr"
+                },
+                "dst": {
+                    "node": "sed0",
+                    "port": "stdin"
+                }
+            },
+            {
+                "src": {
+                    "node": "pgn",
+                    "port": "o"
+                },
+                "dst": {
+                    "node": "bzip20",
+                    "port": "stdin"
+                }
+            },
+            {
+                "src": {
+                    "node": "bzip20",
+                    "port": "stdout"
+                },
+                "dst": {
+                    "node": "grep0",
+                    "port": "stdin"
+                }
+            },
+            {
+                "src": {
+                    "node": "mawk0",
+                    "port": "stderr"
+                },
+                "dst": {
+                    "node": "sed1",
+                    "port": "stdin"
+                }
+            },
+            {
+                "src": {
+                    "node": "grep0",
+                    "port": "stdout"
+                },
+                "dst": {
+                    "node": "mawk0",
+                    "port": "stdin"
+                }
+            },
+            {
+                "src": {
+                    "node": "mawk0",
+                    "port": "stdout"
+                },
+                "dst": {
+                    "node": "stdout",
+                    "port": "i"
+                }
+            },
+            {
+                "src": {
+                    "node": "sed0",
+                    "port": "stdout"
+                },
+                "dst": {
+                    "node": "stderr",
+                    "port": "i"
+                }
+            },
+            {
+                "src": {
+                    "node": "sed1",
+                    "port": "stdout"
+                },
+                "dst": {
+                    "node": "stderr",
+                    "port": "i"
+                }
+            }
+        ]
+    }
+]
